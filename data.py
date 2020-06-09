@@ -2,13 +2,11 @@ from datetime import datetime, timedelta
 import requests
 import json
 
-dataSource="https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json"
+# dataSource="https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json"
+dataSource="https://opendata.ecdc.europa.eu/covid19/casedistribution/json"
 
-ukPopulation = 66435600
-
-# This file stores 14 days of daily data as of 08/06/2020, new data gets added as it arrives from dataSource
-dataFile = "daily_data.txt"
-historicalData = json.load(open(dataFile))
+# https://www.worldometers.info/world-population/population-by-country
+ukPopulation = 67886011
 
 # This file stores the produced rate data, starting on 08/06/2020
 rateFile = "rate_data.txt"
@@ -16,57 +14,54 @@ rateData = json.load(open(rateFile))
 
 
 # List of the last 14 dates
-dates = []
-for i in range(0, 14):
-    dayNdaysago = datetime.now() - timedelta(days=i)
-    pretty = dayNdaysago.strftime('%d/%m/%Y')
-    dates.append(pretty)
+def get_report_dates():
+    dates = []
+    for i in range(0, 14):
+        dayNdaysago = datetime.now() - timedelta(days=i)
+        pretty = dayNdaysago.strftime('%d/%m/%Y')
+        dates.append(pretty)
+
+    fetch_latest_data(dates)
 
 
-def fetch_latest_data():
-    response = json.loads(requests.get(dataSource).text)
+def fetch_latest_data(dates):
+    data = dict()
 
-    lastUpdatedAt=response["metadata"]["lastUpdatedAt"]
-    latestNumber=response["dailyRecords"]["dailyLabConfirmedCases"]
+    publicData = json.loads(requests.get(dataSource).text)
 
-    latestDate = datetime.strptime(lastUpdatedAt.split(sep="T")[0], '%Y-%m-%d').strftime('%d/%m/%Y')
+    for d in publicData["records"]:
+        if d["countriesAndTerritories"] == "United_Kingdom" and d["dateRep"] in dates:
+            data[d["dateRep"]] = d["cases"]
 
-    # If data from API is not in the historical data file - add it
-    if latestDate not in historicalData:
-        historicalData[latestDate] = latestNumber
+    print("Calculating using this New Cases data:")
+    print(json.dumps(data))
 
-        # Write new UK data to dataFile
-        print("NEW DATA!")
-        with open(dataFile, 'w') as file:
-            file.write(json.dumps(historicalData))
-    else:
-        print("No new data was published since the last update!")
-
-    calc_rate(latestDate, historicalData)
-
+    calc_rate(data)
 
 # Calculate the rate over 100000 people
-def calc_rate(latestDate, historicalData):
+def calc_rate(data):
     try:
-        fourteenDayNumbers = [historicalData[d] for d in dates]
+        allTheDates = [d for d in data]
+        latestDate = allTheDates[0]
 
-        fourteenDayTotal = sum(fourteenDayNumbers)
+        allTheNumbers = [int(data[d]) for d in data]
+        fourteenDayTotal = sum(allTheNumbers)
 
-        ukFourteenDayRatePer100k = (fourteenDayTotal * 100000)/ukPopulation
+        fourteenDayRatePer100k = (fourteenDayTotal * 100000)/ukPopulation
 
-        print("RATE=" + str(ukFourteenDayRatePer100k))
+        print("RATE=" + str(fourteenDayRatePer100k))
 
-        write_rate_to_file(latestDate, ukFourteenDayRatePer100k)
+        write_rate_to_file(latestDate, fourteenDayRatePer100k)
     except KeyError:
         print("No data was published for today yet! Check rate_data.txt for historical rate data.")
 
 
 # Write new rate data to a file
-def write_rate_to_file(latestDate, ukFourteenDayRatePer100k):
-    rateData[latestDate] = ukFourteenDayRatePer100k
+def write_rate_to_file(latestDate, fourteenDayRatePer100k):
+    rateData[latestDate] = fourteenDayRatePer100k
 
     with open(rateFile, 'w') as file:
         file.write(json.dumps(rateData)) # use `json.loads` to do the reverse
 
 
-fetch_latest_data()
+get_report_dates()
