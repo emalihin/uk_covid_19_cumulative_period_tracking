@@ -1,1 +1,1 @@
-This takes the latest daily COVID New Cases infection data from dataSource and calculates the cumulative rate of infections over 100k population over 14 days. Then stores the new daily and rate data in the rate_data.txt.
+This takes the latest daily COVID New Cases infection data from dataSource and calculates the cumulative rate of infections over 100k population over 14 days. Then stores the rate data in the rate_data.txt.
