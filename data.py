@@ -2,66 +2,57 @@ from datetime import datetime, timedelta
 import requests
 import json
 
-# dataSource="https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json"
 dataSource="https://opendata.ecdc.europa.eu/covid19/casedistribution/json"
 
 # https://www.worldometers.info/world-population/population-by-country
 ukPopulation = 67886011
 
-# This file stores the produced rate data, starting on 08/06/2020
+timeWindow = 14
+
+# This file stores the produced number data, starting on 09/06/2020
 rateFile = "rate_data.txt"
 rateData = json.load(open(rateFile))
 
+# Date today
+today = datetime.today()
 
 # List of the last 14 dates
 def get_report_dates():
-    dates = []
-    for i in range(0, 14):
-        dayNdaysago = datetime.now() - timedelta(days=i)
-        pretty = dayNdaysago.strftime('%d/%m/%Y')
-        dates.append(pretty)
+    timestamps = [today - timedelta(days=x) for x in range(timeWindow)]
+    dates = [d.strftime('%d/%m/%Y') for d in timestamps]
 
     fetch_latest_data(dates)
 
-
+# Get data from dataSource
 def fetch_latest_data(dates):
-    data = dict()
-
     publicData = json.loads(requests.get(dataSource).text)
-
-    for d in publicData["records"]:
-        if d["countriesAndTerritories"] == "United_Kingdom" and d["dateRep"] in dates:
-            data[d["dateRep"]] = d["cases"]
+    data = {d["dateRep"]: int(d["cases"]) for d in publicData["records"] if d["countriesAndTerritories"] == "United_Kingdom" and d["dateRep"] in dates}
 
     print("Calculating using this New Cases data:")
-    print(json.dumps(data))
+    print(json.dumps(data, indent=4))
 
-    calc_rate(data)
+    if str(today.strftime('%d/%m/%Y')) in dates[0]:
+        calc_rate(data)
+    else:
+        print("No data published for today. Here's previous data:")
+        print(json.dumps(rateData, indent=4))
 
 # Calculate the rate over 100000 people
 def calc_rate(data):
-    try:
-        allTheDates = [d for d in data]
-        latestDate = allTheDates[0]
+    allDayTotal = sum(list(data.values()))
 
-        allTheNumbers = [int(data[d]) for d in data]
-        fourteenDayTotal = sum(allTheNumbers)
+    numberPer100k = (allDayTotal * 100000)/ukPopulation
 
-        fourteenDayRatePer100k = (fourteenDayTotal * 100000)/ukPopulation
+    print("RATE: " + str(numberPer100k))
 
-        print("RATE=" + str(fourteenDayRatePer100k))
-
-        write_rate_to_file(latestDate, fourteenDayRatePer100k)
-    except KeyError:
-        print("No data was published for today yet! Check rate_data.txt for historical rate data.")
-
+    write_rate_to_file(numberPer100k)
 
 # Write new rate data to a file
-def write_rate_to_file(latestDate, fourteenDayRatePer100k):
-    rateData[latestDate] = fourteenDayRatePer100k
+def write_rate_to_file(numberPer100k):
+    rateData[str(today.strftime('%d/%m/%Y'))] = numberPer100k
 
     with open(rateFile, 'w') as file:
-        file.write(json.dumps(rateData)) # use `json.loads` to do the reverse
+        file.write(json.dumps(rateData, indent=4)) # use `json.loads` to do the reverse
 
 
 get_report_dates()
