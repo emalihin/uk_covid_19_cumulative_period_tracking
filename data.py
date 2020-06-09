@@ -3,12 +3,15 @@ import requests
 import csv
 import json
 
+dataSource="https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json"
+
 ukPopulation = 66435600
 
 # This file stores 14 days of daily data as of 08/06/2020 and gets updated with new data every time it arrives
 dataFile = "daily_data.txt"
 historicalData = json.load(open(dataFile))
 
+# This file stores the produced rate data
 rateFile = "rate_data.txt"
 rateData = json.load(open(rateFile))
 
@@ -22,7 +25,7 @@ for i in range(0, 14):
 
 
 def fetch_latest_data(historicalData):
-    response = json.loads(requests.get("https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json").text)
+    response = json.loads(requests.get(dataSource).text)
 
     lastUpdatedAt=response["metadata"]["lastUpdatedAt"]
     latestNumber=response["dailyRecords"]["dailyLabConfirmedCases"]
