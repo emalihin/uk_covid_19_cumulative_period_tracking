@@ -6,11 +6,11 @@ dataSource="https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_
 
 ukPopulation = 66435600
 
-# This file stores 14 days of daily data as of 08/06/2020 and gets updated with new data every time it arrives
+# This file stores 14 days of daily data as of 08/06/2020, new data gets added as it arrives from dataSource
 dataFile = "daily_data.txt"
 historicalData = json.load(open(dataFile))
 
-# This file stores the produced rate data
+# This file stores the produced rate data, starting on 08/06/2020
 rateFile = "rate_data.txt"
 rateData = json.load(open(rateFile))
 
@@ -23,7 +23,7 @@ for i in range(0, 14):
     dates.append(pretty)
 
 
-def fetch_latest_data(historicalData):
+def fetch_latest_data():
     response = json.loads(requests.get(dataSource).text)
 
     lastUpdatedAt=response["metadata"]["lastUpdatedAt"]
@@ -38,7 +38,7 @@ def fetch_latest_data(historicalData):
         # Write new UK data to dataFile
         print("NEW DATA!")
         with open(dataFile, 'w') as file:
-            file.write(json.dumps(historicalData)) # use `json.loads` to do the reverse
+            file.write(json.dumps(historicalData))
     else:
         print("No new data was published since the last update!")
 
@@ -53,11 +53,12 @@ def calc_rate(latestDate, historicalData):
         fourteenDayTotal = sum(fourteenDayNumbers)
 
         ukFourteenDayRatePer100k = (fourteenDayTotal * 100000)/ukPopulation
+
         print("RATE=" + str(ukFourteenDayRatePer100k))
 
         write_rate_to_file(latestDate, ukFourteenDayRatePer100k)
     except KeyError:
-        print("No data was published for today yet!")
+        print("No data was published for today yet! Check rate_data.txt for historical rate data.")
 
 
 # Write new rate data to a file
@@ -68,4 +69,4 @@ def write_rate_to_file(latestDate, ukFourteenDayRatePer100k):
         file.write(json.dumps(rateData)) # use `json.loads` to do the reverse
 
 
-fetch_latest_data(historicalData)
+fetch_latest_data()
