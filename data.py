@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import requests
-import csv
 import json
 
 dataSource="https://c19downloads.azureedge.net/downloads/json/coronavirus-cases_latest.json"
