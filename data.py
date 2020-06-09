@@ -33,6 +33,7 @@ def fetch_latest_data(historicalData):
     if latestDate not in historicalData:
         historicalData[latestDate] = latestNumber
 
+        # Write new UK data to dataFile
         print("NEW DATA!")
         with open(dataFile, 'w') as file:
             file.write(json.dumps(historicalData)) # use `json.loads` to do the reverse
@@ -61,7 +62,7 @@ def calc_rate(latestDate, historicalData):
 def write_rate_to_file(latestDate, ukFourteenDayRatePer100k):
     rateData[latestDate] = ukFourteenDayRatePer100k
 
-    with open("rate_data.txt", 'w') as file:
+    with open(rateFile, 'w') as file:
         file.write(json.dumps(rateData)) # use `json.loads` to do the reverse
 
 
