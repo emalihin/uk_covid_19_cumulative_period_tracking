@@ -28,10 +28,9 @@ def fetch_latest_data(dates):
     publicData = json.loads(requests.get(dataSource).text)
     data = {d["dateRep"]: int(d["cases"]) for d in publicData["records"] if d["countriesAndTerritories"] == "United_Kingdom" and d["dateRep"] in dates}
 
-    print("Calculating using this New Cases data:")
-    print(json.dumps(data, indent=4))
-
-    if str(today.strftime('%d/%m/%Y')) in dates[0]:
+    if str(today.strftime('%d/%m/%Y')) in data:
+        print("Calculating using this New Cases data:")
+        print(json.dumps(data, indent=4))
         calc_rate(data)
     else:
         print("No data published for today. Here's previous data:")
@@ -53,6 +52,5 @@ def write_rate_to_file(numberPer100k):
 
     with open(rateFile, 'w') as file:
         file.write(json.dumps(rateData, indent=4)) # use `json.loads` to do the reverse
-
 
 get_report_dates()
