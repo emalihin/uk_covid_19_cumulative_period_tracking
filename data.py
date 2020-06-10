@@ -21,7 +21,11 @@ def get_report_dates():
     timestamps = [today - timedelta(days=x) for x in range(timeWindow)]
     dates = [d.strftime('%d/%m/%Y') for d in timestamps]
 
-    fetch_latest_data(dates)
+    if str(today.strftime('%d/%m/%Y')) in rateData:
+         print("Data for today has already been fetched. Here's results:")
+         print(json.dumps(rateData, indent=4))
+    else:
+        fetch_latest_data(dates)
 
 # Get data from dataSource
 def fetch_latest_data(dates):
@@ -33,7 +37,7 @@ def fetch_latest_data(dates):
         print(json.dumps(data, indent=4))
         calc_rate(data)
     else:
-        print("No data published for today. Here's previous data:")
+        print("No data has been published for today yet. Here's previous results:")
         print(json.dumps(rateData, indent=4))
 
 # Calculate the rate over 100000 people
@@ -51,6 +55,6 @@ def write_rate_to_file(numberPer100k):
     rateData[str(today.strftime('%d/%m/%Y'))] = numberPer100k
 
     with open(rateFile, 'w') as file:
-        file.write(json.dumps(rateData, indent=4)) # use `json.loads` to do the reverse
+        file.write(json.dumps(rateData, indent=4))
 
 get_report_dates()
