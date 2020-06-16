@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import requests
 import json
+import matplotlib.pyplot as plt
 
 dataSource="https://opendata.ecdc.europa.eu/covid19/casedistribution/json"
 
@@ -24,6 +25,8 @@ def get_report_dates():
     if str(today.strftime('%d/%m/%Y')) in rateData:
          print("Data for today has already been fetched. Here's results:")
          print(json.dumps(rateData, indent=4))
+
+         plot(rateData)
     else:
         fetch_latest_data(dates)
 
@@ -56,5 +59,14 @@ def write_rate_to_file(numberPer100k):
 
     with open(rateFile, 'w') as file:
         file.write(json.dumps(rateData, indent=4))
+
+    plot(rateData)
+
+def plot(rateData):
+     x,y = zip(*sorted(rateData.items()))
+     plt.plot_date(x,y, "-")
+     plt.xlabel('dates')
+     plt.ylabel('numbers')
+     plt.show()
 
 get_report_dates()
