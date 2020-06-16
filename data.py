@@ -67,6 +67,7 @@ def plot(rateData):
      plt.plot_date(x,y, "-")
      plt.xlabel('dates')
      plt.ylabel('numbers')
+     plt.grid()
      plt.show()
 
 get_report_dates()
